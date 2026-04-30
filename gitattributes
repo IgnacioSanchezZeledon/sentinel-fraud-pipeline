@@ -1,0 +1,26 @@
+# Auto-detect text files and normalize line endings
+* text=auto eol=lf
+
+# Force LF for files that run inside Linux containers
+*.sh        text eol=lf
+*.bash      text eol=lf
+*.py        text eol=lf
+*.yml       text eol=lf
+*.yaml      text eol=lf
+*.toml      text eol=lf
+*.json      text eol=lf
+*.md        text eol=lf
+Dockerfile  text eol=lf
+Makefile    text eol=lf
+
+# Mark binaries explicitly (no diff noise)
+*.png   binary
+*.jpg   binary
+*.jpeg  binary
+*.gif   binary
+*.ico   binary
+*.parquet binary
+*.zip   binary
+*.tar.gz binary
+*.pkl   binary
+*.joblib binary

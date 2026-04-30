@@ -1,0 +1,119 @@
+# ============================================================
+# sentinel-fraud-pipeline — .gitignore
+# ============================================================
+
+# --- Environment & secrets ---
+.env
+.env.local
+.env.*.local
+*.pem
+*.key
+secrets/
+
+# --- Python ---
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+dist/
+*.egg-info/
+*.egg
+.eggs/
+pip-log.txt
+pip-delete-this-directory.txt
+
+# --- Virtual environments ---
+.venv/
+venv/
+env/
+ENV/
+
+# --- Testing & coverage ---
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+.tox/
+.nox/
+coverage.xml
+*.cover
+.hypothesis/
+
+# --- Type checkers / linters ---
+.mypy_cache/
+.dmypy.json
+.pyre/
+.pytype/
+.ruff_cache/
+
+# --- Jupyter ---
+.ipynb_checkpoints/
+*.ipynb_checkpoints
+
+# --- IDEs / editors ---
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.project
+.pydevproject
+
+# --- OS ---
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+desktop.ini
+
+# --- Logs ---
+*.log
+logs/
+log/
+
+# --- Data (Kaggle CSV is too large for git) ---
+data/*.csv
+data/*.parquet
+data/*.json
+data/raw/
+data/processed/
+!data/.gitkeep
+!data/README.md
+
+# --- Spark ---
+spark-warehouse/
+derby.log
+metastore_db/
+*.crc
+
+# --- Delta Lake checkpoints (local runs) ---
+checkpoints/
+_delta_log/
+
+# --- MLflow (local artifacts) ---
+mlruns/
+mlartifacts/
+
+# --- Airflow (local) ---
+airflow/logs/
+airflow/airflow.db
+airflow/airflow.cfg
+airflow/webserver_config.py
+airflow/standalone_admin_password.txt
+
+# --- Docker volumes mounted locally ---
+volumes/
+.docker/
+
+# --- MinIO local data ---
+minio-data/
+
+# --- Misc ---
+*.bak
+*.tmp
+.cache/
