@@ -64,34 +64,34 @@ Cada fase del prompt original (`docs/PROMPT.md`) se descompone aquí en micro-pa
 
 ### Fase 1 — Infraestructura
 
-- [ ] **1.1** Estructura de carpetas + `.gitkeep`s donde corresponda (`src/`, `tests/`, `data/`, `airflow/dags/`, `scripts/`, `docs/`)
+- [x] **1.1** Estructura de carpetas + `.gitkeep`s donde corresponda (`src/`, `tests/`, `data/`, `airflow/dags/`, `scripts/`, `docs/`)
   - Verificar: `tree -L 2 -a -I '.git'` muestra layout esperado
   - Commit: `chore(phase-1): scaffold project directory structure`
-- [ ] **1.2** `.env.example` con todas las variables (incluso las de fases futuras, comentadas si aún no se usan)
+- [x] **1.2** `.env.example` con todas las variables (incluso las de fases futuras, comentadas si aún no se usan)
   - Verificar: `cp .env.example .env && grep -c '=' .env` cuenta todas las vars; ninguna línea termina en `=` vacío sin default justificado
   - Commit: `chore(phase-1): add .env.example with all required variables`
-- [ ] **1.3** `docker-compose.yml` solo con Zookeeper + Kafka (con healthchecks)
+- [x] **1.3** `docker-compose.yml` solo con Zookeeper + Kafka (con healthchecks)
   - Verificar: `docker compose up -d zookeeper kafka` levanta sin errores; `docker compose ps` muestra ambos `healthy`
   - Commit: `chore(phase-1): add zookeeper and kafka services with healthchecks`
-- [ ] **1.4** Auto-creación del topic `transactions` (vía variable de entorno de Kafka o init container)
+- [x] **1.4** Auto-creación del topic `transactions` (vía variable de entorno de Kafka o init container)
   - Verificar: sin crearlo a mano, `docker compose exec kafka kafka-topics --bootstrap-server localhost:9092 --list` incluye `transactions`
   - Commit: `chore(phase-1): auto-create transactions topic on startup`
-- [ ] **1.5** Agregar MinIO + init container que crea buckets `bronze`, `silver`, `gold`, `mlflow`
+- [x] **1.5** Agregar MinIO + init container que crea buckets `bronze`, `silver`, `gold`, `mlflow`
   - Verificar: console en `http://localhost:9001` muestra los 4 buckets
   - Commit: `chore(phase-1): add minio with bucket initialization`
-- [ ] **1.6** Agregar Spark master + 1 worker, configurado para acceder a MinIO (s3a)
+- [x] **1.6** Agregar Spark master + 1 worker, configurado para acceder a MinIO (s3a)
   - Verificar: UI en `http://localhost:8080` muestra 1 worker `ALIVE`
   - Commit: `chore(phase-1): add spark master and worker with s3a config`
-- [ ] **1.7** Agregar Postgres (para Airflow futuro)
+- [x] **1.7** Agregar Postgres (para Airflow futuro)
   - Verificar: `docker compose exec postgres pg_isready` retorna OK
   - Commit: `chore(phase-1): add postgres for airflow metadata`
-- [ ] **1.8** `Makefile` con targets: `up`, `down`, `logs`, `health`, `clean`, `help`
+- [x] **1.8** `Makefile` con targets: `up`, `down`, `logs`, `health`, `clean`, `help`
   - Verificar: `make help` lista los targets; `make up && make down` ciclan sin error
   - Commit: `chore(phase-1): add makefile with common targets`
-- [ ] **1.9** `scripts/health_check.sh` que verifica los 4 servicios y retorna exit codes
+- [x] **1.9** `scripts/health_check.sh` que verifica los 4 servicios y retorna exit codes
   - Verificar: `make health` retorna `0` con todos verdes; matar Kafka y `make health` retorna `≠0`
   - Commit: `chore(phase-1): add health check script`
-- [ ] **1.10** Smoke test integral de Fase 1 desde estado limpio
+- [x] **1.10** Smoke test integral de Fase 1 desde estado limpio
   - Verificar: `make clean && cp .env.example .env && make up && sleep 30 && make health` termina verde
   - Commit (solo si hubo ajustes): `chore(phase-1): finalize infrastructure foundation`
 
@@ -247,8 +247,9 @@ Cada fase del prompt original (`docs/PROMPT.md`) se descompone aquí en micro-pa
 > Actualizar al cierre de cada micro-paso confirmado.
 
 - **Fase 0 — Git foundation:** ✅ completa
-- **Fase actual:** Fase 1 — Infraestructura
-- **Próximo micro-paso:** `1.1` — Estructura de carpetas
+- **Fase 1 — Infraestructura:** ✅ completa (1.1 → 1.10)
+- **Fase actual:** Fase 2 — Producer + Bronze
+- **Próximo micro-paso:** `2.1` — Layout de `src/`, `pyproject.toml`, `pytest.ini`, `.python-version`
 
 ---
 
