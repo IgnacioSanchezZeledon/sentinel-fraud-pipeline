@@ -37,3 +37,22 @@ services:
       timeout: 10s
       retries: 5
       start_period: 30s
+
+  kafka-init:
+    image: confluentinc/cp-kafka:7.6.0
+    container_name: sentinel-kafka-init
+    depends_on:
+      kafka:
+        condition: service_healthy
+    environment:
+      KAFKA_TOPIC: ${KAFKA_TOPIC:-transactions}
+      KAFKA_NUM_PARTITIONS: ${KAFKA_NUM_PARTITIONS:-3}
+      KAFKA_REPLICATION_FACTOR: ${KAFKA_REPLICATION_FACTOR:-1}
+    command:
+      - bash
+      - -euc
+      - |
+        kafka-topics --bootstrap-server kafka:29092 --create --if-not-exists --topic $${KAFKA_TOPIC} --partitions $${KAFKA_NUM_PARTITIONS} --replication-factor $${KAFKA_REPLICATION_FACTOR}
+        echo 'topic ready:'
+        kafka-topics --bootstrap-server kafka:29092 --list
+    restart: "no"
