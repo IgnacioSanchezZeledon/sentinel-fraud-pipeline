@@ -1,0 +1,20 @@
+# ============================================================
+# sentinel-fraud-pipeline — Python dependencies
+# Verified on CPython 3.11
+# ============================================================
+
+# ---- Runtime: producer (Phase 2) ----
+kafka-python==2.0.2
+python-dotenv==1.0.1
+tqdm==4.66.5
+
+# ---- Runtime: bronze consumer & spark transformations (Phases 2-5) ----
+pyspark==3.5.3
+delta-spark==3.2.1
+
+# ---- Dev: testing ----
+pytest==8.3.3
+pytest-cov==5.0.0
+
+# ---- Dev: linting & formatting ----
+ruff==0.6.9
