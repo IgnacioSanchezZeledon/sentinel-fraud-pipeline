@@ -106,7 +106,7 @@ Cada fase del prompt original (`docs/PROMPT.md`) se descompone aquí en micro-pa
 - [x] **2.3** Producer lee `data/creditcard.csv`, agrega `event_id` (UUID) y `event_timestamp` (ISO 8601), modo `slow` (1 msg/s)
   - Verificar: `make producer ARGS="--mode slow --limit 10"` publica 10 JSONs válidos con ambos campos
   - Commit: `feat(phase-2): csv-driven producer with event metadata`
-- [ ] **2.4** Modos `fast` y `realistic`, barra de progreso con `tqdm`, shutdown graceful con SIGINT
+- [x] **2.4** Modos `fast` y `realistic`, barra de progreso con `tqdm`, shutdown graceful con SIGINT
   - Verificar: los 3 modos funcionan; Ctrl+C cierra sin perder mensajes en buffer ni dejar el productor zombie
   - Commit: `feat(phase-2): add fast and realistic modes plus graceful shutdown`
 - [ ] **2.5** Bronze consumer: PySpark Structured Streaming desde Kafka → Delta en `s3a://bronze/transactions/`
@@ -249,7 +249,7 @@ Cada fase del prompt original (`docs/PROMPT.md`) se descompone aquí en micro-pa
 - **Fase 0 — Git foundation:** ✅ completa
 - **Fase 1 — Infraestructura:** ✅ completa (1.1 → 1.10)
 - **Fase actual:** Fase 2 — Producer + Bronze
-- **Próximo micro-paso:** `2.4` — Modos `fast` y `realistic`, barra de progreso con `tqdm`, shutdown graceful con SIGINT
+- **Próximo micro-paso:** `2.5` — Bronze consumer: PySpark Structured Streaming desde Kafka → Delta en `s3a://bronze/transactions/`
 
 ---
 
