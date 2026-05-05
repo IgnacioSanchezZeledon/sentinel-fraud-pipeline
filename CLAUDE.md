@@ -100,7 +100,7 @@ Cada fase del prompt original (`docs/PROMPT.md`) se descompone aquí en micro-pa
 - [x] **2.1** Layout de `src/`, `pyproject.toml` (o `requirements.txt`), `pytest.ini`, `.python-version`
   - Verificar: en venv local, `pip install -r requirements.txt` corre sin errores
   - Commit: `chore(phase-2): bootstrap python project layout`
-- [ ] **2.2** Producer mínimo: conecta a Kafka y manda 1 mensaje hardcoded
+- [x] **2.2** Producer mínimo: conecta a Kafka y manda 1 mensaje hardcoded
   - Verificar: `python -m src.producer.transaction_producer --test` muestra el mensaje en `kafka-console-consumer`
   - Commit: `feat(phase-2): minimal kafka producer with single test message`
 - [ ] **2.3** Producer lee `data/creditcard.csv`, agrega `event_id` (UUID) y `event_timestamp` (ISO 8601), modo `slow` (1 msg/s)
@@ -249,7 +249,7 @@ Cada fase del prompt original (`docs/PROMPT.md`) se descompone aquí en micro-pa
 - **Fase 0 — Git foundation:** ✅ completa
 - **Fase 1 — Infraestructura:** ✅ completa (1.1 → 1.10)
 - **Fase actual:** Fase 2 — Producer + Bronze
-- **Próximo micro-paso:** `2.2` — Producer mínimo: conecta a Kafka y manda 1 mensaje hardcoded
+- **Próximo micro-paso:** `2.3` — Producer lee `data/creditcard.csv`, agrega `event_id` (UUID) y `event_timestamp` (ISO 8601), modo `slow` (1 msg/s)
 
 ---
 
