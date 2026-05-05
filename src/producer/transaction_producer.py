@@ -1,9 +1,10 @@
-"""CSV-driven Kafka producer for Phase 2 micro-step 2.3.
+"""CSV-driven Kafka producer for Phase 2 micro-step 2.4.
 
 Reads transactions from `data/creditcard.csv`, enriches each row with
 `event_id` (UUID4) and `event_timestamp` (ISO 8601 UTC), and publishes
-to the configured Kafka topic. Currently supports a single mode
-(`slow`, 1 msg/s); fast/realistic modes arrive in micro-step 2.4.
+to the configured Kafka topic. Supports three modes (`slow`, `fast`,
+`realistic`), renders a tqdm progress bar, and shuts down gracefully on
+SIGINT/SIGTERM by flushing pending messages before closing.
 """
 
 from __future__ import annotations
@@ -13,23 +14,52 @@ import csv
 import json
 import logging
 import os
+import random
+import signal
 import sys
 import time
 import uuid
-from collections.abc import Iterator
+from collections.abc import Callable, Iterator
 from datetime import UTC, datetime
 from pathlib import Path
 
 from kafka import KafkaProducer
 from kafka.errors import KafkaError
+from tqdm import tqdm
 
 logger = logging.getLogger(__name__)
 
 DEFAULT_BROKER = "localhost:9092"
 DEFAULT_TOPIC = "transactions"
 DEFAULT_CSV_PATH = "data/creditcard.csv"
-DELIVERY_TIMEOUT_SECONDS = 10
 SLOW_MODE_DELAY_SECONDS = 1.0
+REALISTIC_MEAN_DELAY_SECONDS = 0.2
+REALISTIC_MAX_DELAY_SECONDS = 2.0
+
+
+class ShutdownFlag:
+    """Boolean flag flipped by the SIGINT/SIGTERM handler."""
+
+    def __init__(self) -> None:
+        self._requested = False
+
+    @property
+    def requested(self) -> bool:
+        return self._requested
+
+    def request(self) -> None:
+        self._requested = True
+
+
+def install_signal_handlers(flag: ShutdownFlag) -> None:
+    """Install handlers that flip `flag` when SIGINT or SIGTERM arrives."""
+
+    def handler(signum: int, _frame: object) -> None:
+        logger.info("shutdown requested (signal %s); finishing current batch...", signum)
+        flag.request()
+
+    signal.signal(signal.SIGINT, handler)
+    signal.signal(signal.SIGTERM, handler)
 
 
 def build_producer(broker: str) -> KafkaProducer:
@@ -60,35 +90,51 @@ def iter_rows(csv_path: Path, limit: int) -> Iterator[dict[str, str]]:
             yield row
 
 
+def make_delay_fn(mode: str) -> Callable[[], float]:
+    """Return a callable that yields the next sleep duration for `mode`."""
+    if mode == "slow":
+        return lambda: SLOW_MODE_DELAY_SECONDS
+    if mode == "fast":
+        return lambda: 0.0
+    if mode == "realistic":
+        rate = 1.0 / REALISTIC_MEAN_DELAY_SECONDS
+        return lambda: min(random.expovariate(rate), REALISTIC_MAX_DELAY_SECONDS)
+    raise ValueError(f"unknown mode: {mode}")
+
+
 def publish_csv(
     producer: KafkaProducer,
     topic: str,
     csv_path: Path,
     limit: int,
-    delay_seconds: float,
+    delay_fn: Callable[[], float],
+    shutdown: ShutdownFlag,
 ) -> int:
-    """Publish enriched rows to `topic`. Returns the number of messages sent."""
-    sent = 0
-    for row in iter_rows(csv_path, limit):
-        message = enrich_row(row)
-        future = producer.send(topic, message)
-        future.get(timeout=DELIVERY_TIMEOUT_SECONDS)
-        sent += 1
-        logger.debug("sent event_id=%s seq=%d", message["event_id"], sent)
-        if delay_seconds > 0:
-            time.sleep(delay_seconds)
-    return sent
+    """Publish enriched rows to `topic`. Returns the number of messages queued."""
+    queued = 0
+    total = limit if limit > 0 else None
+    with tqdm(total=total, unit="msg", desc="publishing") as bar:
+        for row in iter_rows(csv_path, limit):
+            if shutdown.requested:
+                break
+            producer.send(topic, enrich_row(row))
+            queued += 1
+            bar.update(1)
+            wait = delay_fn()
+            if wait > 0:
+                time.sleep(wait)
+    return queued
 
 
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description="CSV-driven Kafka producer (Phase 2 micro-step 2.3)."
+        description="CSV-driven Kafka producer (Phase 2 micro-step 2.4)."
     )
     parser.add_argument(
         "--mode",
-        choices=["slow"],
+        choices=["slow", "fast", "realistic"],
         required=True,
-        help="Publishing rate mode. `slow` = 1 msg/s. (fast/realistic in 2.4)",
+        help="Publishing rate. slow=1msg/s, fast=no delay, realistic=Poisson arrivals.",
     )
     parser.add_argument(
         "--limit",
@@ -113,7 +159,8 @@ def main(argv: list[str] | None = None) -> int:
         logger.error("csv not found at %s", csv_path)
         return 2
 
-    delay = SLOW_MODE_DELAY_SECONDS
+    shutdown = ShutdownFlag()
+    install_signal_handlers(shutdown)
 
     logger.info(
         "publishing from %s to broker=%s topic=%s mode=%s limit=%s",
@@ -125,15 +172,18 @@ def main(argv: list[str] | None = None) -> int:
     )
 
     producer = build_producer(broker)
+    delay_fn = make_delay_fn(args.mode)
+    queued = 0
     try:
-        sent = publish_csv(producer, topic, csv_path, args.limit, delay)
-        logger.info("done. published %d messages.", sent)
+        queued = publish_csv(producer, topic, csv_path, args.limit, delay_fn, shutdown)
+        logger.info("queued %d messages; flushing...", queued)
     except KafkaError:
         logger.exception("failed during publish")
         return 1
     finally:
         producer.flush()
         producer.close()
+    logger.info("done. delivered %d messages.", queued)
     return 0
 
 
