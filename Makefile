@@ -2,7 +2,7 @@
 .PHONY: help up down logs health clean smoke-phase1 producer
 
 help: ## Show this help message
-	@grep -hE '^[a-zA-Z_-]+:.*?## ' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  %-10s %s\n", $$1, $$2}'
+	@grep -hE '^[a-zA-Z0-9_-]+:.*?## ' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  %-13s %s\n", $$1, $$2}'
 
 up: ## Start all services in background
 	docker compose up -d
