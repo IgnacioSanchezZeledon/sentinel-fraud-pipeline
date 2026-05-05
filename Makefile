@@ -1,5 +1,5 @@
 .DEFAULT_GOAL := help
-.PHONY: help up down logs health clean
+.PHONY: help up down logs health clean smoke-phase1
 
 help: ## Show this help message
 	@grep -hE '^[a-zA-Z_-]+:.*?## ' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  %-10s %s\n", $$1, $$2}'
@@ -18,3 +18,12 @@ health: ## Run the cluster health check script
 
 clean: ## Stop containers AND delete all volumes (destructive)
 	docker compose down -v
+
+smoke-phase1: ## Phase 1 smoke test from a clean slate (destructive: wipes volumes)
+	$(MAKE) clean
+	cp .env.example .env
+	$(MAKE) up
+	@echo "==> Waiting 30s for services to stabilize..."
+	@sleep 30
+	$(MAKE) health
+	@echo "==> Phase 1 smoke test PASSED."
