@@ -1,5 +1,5 @@
 .DEFAULT_GOAL := help
-.PHONY: help up down logs health clean smoke-phase1
+.PHONY: help up down logs health clean smoke-phase1 producer
 
 help: ## Show this help message
 	@grep -hE '^[a-zA-Z_-]+:.*?## ' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  %-10s %s\n", $$1, $$2}'
@@ -27,3 +27,6 @@ smoke-phase1: ## Phase 1 smoke test from a clean slate (destructive: wipes volum
 	@sleep 30
 	$(MAKE) health
 	@echo "==> Phase 1 smoke test PASSED."
+
+producer: ## Run the producer. Use ARGS="--mode slow --limit 10" to pass flags
+	.venv/bin/python -m src.producer.transaction_producer $(ARGS)
