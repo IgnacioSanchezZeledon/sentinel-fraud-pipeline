@@ -41,12 +41,37 @@ CSV → Kafka Producer → [transactions topic]
                     Grafana dashboard
 ```
 
+## Quick start (current state)
+
+Phase 1 is complete: the full local infrastructure boots from a clean slate with three commands.
+
+```bash
+cp .env.example .env
+make up
+make health
+```
+
+Once `make health` reports all services as `[OK]`, the following endpoints are available:
+
+| Service           | URL                       | Credentials                  |
+|-------------------|---------------------------|------------------------------|
+| MinIO console     | http://localhost:9001     | `minioadmin` / `minioadmin`  |
+| Spark master UI   | http://localhost:8080     | —                            |
+| Kafka broker      | `localhost:9092`          | —                            |
+| Postgres          | `localhost:5432`          | `airflow` / `airflow`        |
+
+Topics and buckets are created automatically on first boot:
+- Kafka topic: `transactions`
+- MinIO buckets: `bronze`, `silver`, `gold`, `mlflow`
+
+Other useful targets: `make logs`, `make down`, `make clean` (the last one wipes volumes).
+
 ## Build status
 
 | Phase | Description                              | Status |
 |-------|------------------------------------------|:------:|
 | 0     | Git foundation                           |   ✅   |
-| 1     | Infrastructure (Docker Compose)          |   ⏳   |
+| 1     | Infrastructure (Docker Compose)          |   ✅   |
 | 2     | Kafka producer + Bronze ingestion        |   ⏳   |
 | 3     | Silver layer (PySpark batch)             |   ⏳   |
 | 4     | ML training + MLflow                     |   ⏳   |
