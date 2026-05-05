@@ -97,7 +97,7 @@ Cada fase del prompt original (`docs/PROMPT.md`) se descompone aquí en micro-pa
 
 ### Fase 2 — Producer + Bronze
 
-- [ ] **2.1** Layout de `src/`, `pyproject.toml` (o `requirements.txt`), `pytest.ini`, `.python-version`
+- [x] **2.1** Layout de `src/`, `pyproject.toml` (o `requirements.txt`), `pytest.ini`, `.python-version`
   - Verificar: en venv local, `pip install -r requirements.txt` corre sin errores
   - Commit: `chore(phase-2): bootstrap python project layout`
 - [ ] **2.2** Producer mínimo: conecta a Kafka y manda 1 mensaje hardcoded
@@ -249,7 +249,7 @@ Cada fase del prompt original (`docs/PROMPT.md`) se descompone aquí en micro-pa
 - **Fase 0 — Git foundation:** ✅ completa
 - **Fase 1 — Infraestructura:** ✅ completa (1.1 → 1.10)
 - **Fase actual:** Fase 2 — Producer + Bronze
-- **Próximo micro-paso:** `2.1` — Layout de `src/`, `pyproject.toml`, `pytest.ini`, `.python-version`
+- **Próximo micro-paso:** `2.2` — Producer mínimo: conecta a Kafka y manda 1 mensaje hardcoded
 
 ---
 
