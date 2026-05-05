@@ -62,7 +62,7 @@ CSV → Kafka Producer → [transactions topic]
 
 ## Phase 1 — Infrastructure foundation
 
-**Goal:** `docker-compose up -d` boots the core services and everything is green.
+**Goal:** `docker compose up -d` boots the core services and everything is green.
 
 **Deliver:**
 1. `docker-compose.yml` with these services only:
