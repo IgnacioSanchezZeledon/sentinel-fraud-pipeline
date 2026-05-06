@@ -1,5 +1,5 @@
 .DEFAULT_GOAL := help
-.PHONY: help up down logs health clean smoke-phase1 producer
+.PHONY: help up down logs health clean smoke-phase1 producer bronze-consumer
 
 help: ## Show this help message
 	@grep -hE '^[a-zA-Z0-9_-]+:.*?## ' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  %-13s %s\n", $$1, $$2}'
@@ -30,3 +30,8 @@ smoke-phase1: ## Phase 1 smoke test from a clean slate (destructive: wipes volum
 
 producer: ## Run the producer. Use ARGS="--mode slow --limit 10" to pass flags
 	.venv/bin/python -m src.producer.transaction_producer $(ARGS)
+
+bronze-consumer: ## Run the bronze structured streaming consumer (foreground; Ctrl+C to stop)
+	docker compose exec -T spark-master /opt/spark/bin/spark-submit \
+	  --master spark://spark-master:7077 \
+	  /opt/app/src/consumers/bronze_consumer.py

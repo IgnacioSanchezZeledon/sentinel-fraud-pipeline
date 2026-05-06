@@ -113,6 +113,7 @@ services:
       - "7077:7077"
     volumes:
       - ./docker/spark/spark-defaults.conf:/opt/spark/conf/spark-defaults.conf:ro
+      - ./src:/opt/app/src:ro
     depends_on:
       minio:
         condition: service_healthy
