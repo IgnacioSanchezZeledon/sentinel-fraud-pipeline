@@ -109,7 +109,7 @@ Cada fase del prompt original (`docs/PROMPT.md`) se descompone aquí en micro-pa
 - [x] **2.4** Modos `fast` y `realistic`, barra de progreso con `tqdm`, shutdown graceful con SIGINT
   - Verificar: los 3 modos funcionan; Ctrl+C cierra sin perder mensajes en buffer ni dejar el productor zombie
   - Commit: `feat(phase-2): add fast and realistic modes plus graceful shutdown`
-- [ ] **2.5** Bronze consumer: PySpark Structured Streaming desde Kafka → Delta en `s3a://bronze/transactions/`
+- [x] **2.5** Bronze consumer: PySpark Structured Streaming desde Kafka → Delta en `s3a://bronze/transactions/`
   - Verificar: con producer corriendo, `spark.read.format("delta").load("s3a://bronze/transactions/").count()` aumenta entre lecturas
   - Commit: `feat(phase-2): bronze structured streaming consumer with delta sink`
 - [ ] **2.6** Audit columns (`_ingested_at`, `_kafka_offset`, `_kafka_partition`) + checkpoint para exactly-once
@@ -249,7 +249,7 @@ Cada fase del prompt original (`docs/PROMPT.md`) se descompone aquí en micro-pa
 - **Fase 0 — Git foundation:** ✅ completa
 - **Fase 1 — Infraestructura:** ✅ completa (1.1 → 1.10)
 - **Fase actual:** Fase 2 — Producer + Bronze
-- **Próximo micro-paso:** `2.5` — Bronze consumer: PySpark Structured Streaming desde Kafka → Delta en `s3a://bronze/transactions/`
+- **Próximo micro-paso:** `2.6` — Audit columns (`_ingested_at`, `_kafka_offset`, `_kafka_partition`) + checkpoint para exactly-once
 
 ---
 
