@@ -1,10 +1,10 @@
 # ============================================================
 # sentinel-fraud-pipeline — Python dependencies
-# Verified on CPython 3.11
+# Verified on CPython 3.12
 # ============================================================
 
 # ---- Runtime: producer (Phase 2) ----
-kafka-python==2.0.2
+kafka-python==2.3.1
 python-dotenv==1.0.1
 tqdm==4.66.5
 
