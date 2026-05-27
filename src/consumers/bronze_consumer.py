@@ -1,9 +1,10 @@
-"""Bronze consumer for Phase 2 micro-step 2.5.
+"""Bronze consumer for Phase 2 micro-steps 2.5–2.6.
 
 PySpark Structured Streaming job that subscribes to the Kafka transactions
 topic and appends raw records (Kafka envelope + JSON value as string) to a
-Delta table at `s3a://bronze/transactions/`. Audit columns and exactly-once
-guarantees beyond the basic checkpoint arrive in micro-step 2.6.
+Delta table at `s3a://bronze/transactions/`. The Spark Streaming checkpoint
+provides exactly-once semantics: restarting the job resumes from the last
+committed offsets without duplicating rows.
 """
 
 from __future__ import annotations
@@ -56,10 +57,11 @@ def main() -> int:
         "CAST(key AS STRING) AS kafka_key",
         "CAST(value AS STRING) AS value",
         "topic",
-        "partition",
-        "offset",
+        "partition AS _kafka_partition",
+        "offset AS _kafka_offset",
         "timestamp AS kafka_timestamp",
         "timestampType AS kafka_timestamp_type",
+        "current_timestamp() AS _ingested_at",
     )
 
     query = (

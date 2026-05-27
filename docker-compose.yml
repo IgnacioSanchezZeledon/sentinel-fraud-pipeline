@@ -113,6 +113,7 @@ services:
       - "7077:7077"
     volumes:
       - ./docker/spark/spark-defaults.conf:/opt/spark/conf/spark-defaults.conf:ro
+      - ./docker/spark/log4j2.properties:/opt/spark/conf/log4j2.properties:ro
       - ./src:/opt/app/src:ro
     depends_on:
       minio:
@@ -134,6 +135,7 @@ services:
       AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY:-minioadmin}
     volumes:
       - ./docker/spark/spark-defaults.conf:/opt/spark/conf/spark-defaults.conf:ro
+      - ./docker/spark/log4j2.properties:/opt/spark/conf/log4j2.properties:ro
     depends_on:
       spark-master:
         condition: service_started
