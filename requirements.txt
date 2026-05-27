@@ -10,7 +10,7 @@ tqdm==4.66.5
 
 # ---- Runtime: bronze consumer & spark transformations (Phases 2-5) ----
 pyspark==3.5.3
-delta-spark==3.2.1
+delta-spark==3.1.0
 
 # ---- Dev: testing ----
 pytest==8.3.3
