@@ -112,10 +112,10 @@ Cada fase del prompt original (`docs/PROMPT.md`) se descompone aquí en micro-pa
 - [x] **2.5** Bronze consumer: PySpark Structured Streaming desde Kafka → Delta en `s3a://bronze/transactions/`
   - Verificar: con producer corriendo, `spark.read.format("delta").load("s3a://bronze/transactions/").count()` aumenta entre lecturas
   - Commit: `feat(phase-2): bronze structured streaming consumer with delta sink`
-- [ ] **2.6** Audit columns (`_ingested_at`, `_kafka_offset`, `_kafka_partition`) + checkpoint para exactly-once
+- [x] **2.6** Audit columns (`_ingested_at`, `_kafka_offset`, `_kafka_partition`) + checkpoint para exactly-once
   - Verificar: matar y reiniciar el consumer no duplica filas; las 3 columnas existen y son no nulas
   - Commit: `feat(phase-2): add audit columns and checkpoint-based exactly-once`
-- [ ] **2.7** Smoke test integral de Fase 2 (500 mensajes end-to-end)
+- [x] **2.7** Smoke test integral de Fase 2 (500 mensajes end-to-end)
   - Verificar: `count(*) == 500` y `count(distinct event_id) == 500`
   - Commit (si aplica): `chore(phase-2): finalize bronze ingestion`
 
@@ -248,8 +248,9 @@ Cada fase del prompt original (`docs/PROMPT.md`) se descompone aquí en micro-pa
 
 - **Fase 0 — Git foundation:** ✅ completa
 - **Fase 1 — Infraestructura:** ✅ completa (1.1 → 1.10)
-- **Fase actual:** Fase 2 — Producer + Bronze
-- **Próximo micro-paso:** `2.6` — Audit columns (`_ingested_at`, `_kafka_offset`, `_kafka_partition`) + checkpoint para exactly-once
+- **Fase 2 — Producer + Bronze:** ✅ completa (2.1 → 2.7)
+- **Fase actual:** Fase 3 — Silver
+- **Próximo micro-paso:** `3.1` — Esqueleto del job (lectura Bronze + escritura noop a Silver con schema esperado)
 
 ---
 
