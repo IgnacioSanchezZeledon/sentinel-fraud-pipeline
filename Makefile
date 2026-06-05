@@ -1,5 +1,5 @@
 .DEFAULT_GOAL := help
-.PHONY: help up down logs health clean smoke-phase1 producer bronze-consumer silver
+.PHONY: help up down logs health clean smoke-phase1 producer bronze-consumer silver test-silver
 
 help: ## Show this help message
 	@grep -hE '^[a-zA-Z0-9_-]+:.*?## ' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  %-13s %s\n", $$1, $$2}'
@@ -40,3 +40,6 @@ silver: ## Run the silver batch job (bronze -> silver delta)
 	docker compose exec -T spark-master /opt/spark/bin/spark-submit \
 	  --master spark://spark-master:7077 \
 	  /opt/app/src/transformations/silver_job.py
+
+test-silver: ## Run silver transformation unit tests (local spark fixture; no docker)
+	.venv/bin/pytest tests/transformations -v

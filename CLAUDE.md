@@ -133,10 +133,10 @@ Cada fase del prompt original (`docs/PROMPT.md`) se descompone aquí en micro-pa
 - [x] **3.4** Features temporales y de monto (`transaction_hour`, `transaction_day_of_week`, `hour_sin`, `hour_cos`, `amount_bin`)
   - Verificar: columnas existen, sin nulos, valores en rangos esperados (`hour ∈ [0,23]`, `bin ∈ {low,medium,high,very_high}`)
   - Commit: `feat(phase-3): add temporal and amount-based features`
-- [ ] **3.5** Features de ventana (`avg_amount_last_5`, `amount_zscore`, `is_high_amount`)
+- [x] **3.5** Features de ventana (`avg_amount_last_5`, `amount_zscore`, `is_high_amount`)
   - Verificar: columnas existen; spot-check manual contra el cálculo esperado en 5 filas
   - Commit: `feat(phase-3): add window-based statistical features`
-- [ ] **3.6** Tests unitarios con fixture local de Spark (sin Kafka, sin MinIO)
+- [x] **3.6** Tests unitarios con fixture local de Spark (sin Kafka, sin MinIO)
   - Verificar: `make test-silver` pasa los 4 casos (dedup, null filter, amount_bin, feature presence)
   - Commit: `test(phase-3): add unit tests for silver transformations`
 
@@ -249,8 +249,9 @@ Cada fase del prompt original (`docs/PROMPT.md`) se descompone aquí en micro-pa
 - **Fase 0 — Git foundation:** ✅ completa
 - **Fase 1 — Infraestructura:** ✅ completa (1.1 → 1.10)
 - **Fase 2 — Producer + Bronze:** ✅ completa (2.1 → 2.7)
-- **Fase actual:** Fase 3 — Silver (4/6 micro-pasos cerrados)
-- **Próximo micro-paso:** `3.5` — Features de ventana (`avg_amount_last_5`, `amount_zscore`, `is_high_amount`)
+- **Fase 3 — Silver:** ✅ completa (3.1 → 3.6)
+- **Fase actual:** Fase 4 — ML training + MLflow
+- **Próximo micro-paso:** `4.1` — Servicio `mlflow` en `docker-compose.yml`, artifacts en `s3://mlflow/`
 
 ---
 
