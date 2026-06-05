@@ -3,18 +3,20 @@
 Batch PySpark job that reads the Bronze Delta table, parses the raw JSON
 `value` payload, applies type casts (V1–V28 → Double, Amount → Decimal,
 Class → Integer), drops rows where any required typed column is null,
-deduplicates by `event_id`, and writes the result as Delta at
-`s3a://silver/transactions/`. Feature engineering lands in 3.4–3.5.
+deduplicates by `event_id`, and adds temporal and amount-based features
+before writing the result as Delta at `s3a://silver/transactions/`.
+Window-based features land in micro-step 3.5.
 """
 
 from __future__ import annotations
 
 import logging
+import math
 import os
 import sys
 
 from pyspark.sql import DataFrame, SparkSession
-from pyspark.sql.functions import col, from_json
+from pyspark.sql.functions import col, cos, dayofweek, from_json, hour, sin, to_timestamp, when
 from pyspark.sql.types import (
     DecimalType,
     DoubleType,
@@ -26,6 +28,12 @@ from pyspark.sql.types import (
 
 AMOUNT_DECIMAL_PRECISION = 18
 AMOUNT_DECIMAL_SCALE = 2
+
+HOURS_PER_DAY = 24
+
+AMOUNT_BIN_LOW_MAX = 10
+AMOUNT_BIN_MEDIUM_MAX = 100
+AMOUNT_BIN_HIGH_MAX = 1000
 
 logger = logging.getLogger(__name__)
 
@@ -116,6 +124,40 @@ def deduplicate(df: DataFrame) -> DataFrame:
     return df.dropDuplicates(["event_id"])
 
 
+def add_temporal_features(df: DataFrame) -> DataFrame:
+    """Derive hour-of-day, day-of-week, and cyclic hour encoding.
+
+    `transaction_day_of_week` follows Spark's `dayofweek` convention
+    (1 = Sunday, 7 = Saturday). The sin/cos encoding maps the discrete
+    hour onto the unit circle so that hour 23 sits next to hour 0,
+    avoiding the false ordinal gap a raw integer would imply.
+    """
+    parsed_ts = to_timestamp(col("event_timestamp"))
+    radians_per_hour = 2 * math.pi / HOURS_PER_DAY
+    return (
+        df.withColumn("transaction_hour", hour(parsed_ts))
+        .withColumn("transaction_day_of_week", dayofweek(parsed_ts))
+        .withColumn("hour_sin", sin(col("transaction_hour") * radians_per_hour))
+        .withColumn("hour_cos", cos(col("transaction_hour") * radians_per_hour))
+    )
+
+
+def add_amount_features(df: DataFrame) -> DataFrame:
+    """Discretize `Amount` into a categorical bin.
+
+    Bins (in dollars): low < 10 ≤ medium < 100 ≤ high < 1000 ≤ very_high.
+    `Amount` is non-null at this stage because `drop_invalid_rows` ran
+    earlier in the pipeline.
+    """
+    return df.withColumn(
+        "amount_bin",
+        when(col("Amount") < AMOUNT_BIN_LOW_MAX, "low")
+        .when(col("Amount") < AMOUNT_BIN_MEDIUM_MAX, "medium")
+        .when(col("Amount") < AMOUNT_BIN_HIGH_MAX, "high")
+        .otherwise("very_high"),
+    )
+
+
 def write_silver(silver: DataFrame, output_path: str) -> None:
     """Overwrite the Silver Delta table at `output_path`."""
     (
@@ -145,6 +187,8 @@ def main() -> int:
     silver = apply_casts(silver)
     silver = drop_invalid_rows(silver)
     silver = deduplicate(silver)
+    silver = add_temporal_features(silver)
+    silver = add_amount_features(silver)
     write_silver(silver, output_path)
 
     logger.info("silver job finished")
