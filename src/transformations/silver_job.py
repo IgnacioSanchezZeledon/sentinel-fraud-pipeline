@@ -1,11 +1,10 @@
-"""Silver job skeleton for Phase 3 micro-step 3.1.
+"""Silver job for Phase 3.
 
 Batch PySpark job that reads the Bronze Delta table, parses the raw JSON
-`value` payload into the expected Silver column layout, and writes the
-result to a Delta table at `s3a://silver/transactions/`. No transformation
-logic (type casts, deduplication, feature engineering) is applied yet —
-those land in micro-steps 3.2–3.5. The goal here is only to wire up the
-read/write plumbing and pin down the target schema.
+`value` payload, applies type casts (V1–V28 → Double, Amount → Decimal,
+Class → Integer), drops rows where any required typed column is null,
+and writes the result as Delta at `s3a://silver/transactions/`. Dedup
+and feature engineering land in micro-steps 3.3–3.5.
 """
 
 from __future__ import annotations
@@ -16,7 +15,17 @@ import sys
 
 from pyspark.sql import DataFrame, SparkSession
 from pyspark.sql.functions import col, from_json
-from pyspark.sql.types import StringType, StructField, StructType
+from pyspark.sql.types import (
+    DecimalType,
+    DoubleType,
+    IntegerType,
+    StringType,
+    StructField,
+    StructType,
+)
+
+AMOUNT_DECIMAL_PRECISION = 18
+AMOUNT_DECIMAL_SCALE = 2
 
 logger = logging.getLogger(__name__)
 
@@ -56,16 +65,44 @@ def read_bronze(spark: SparkSession, input_path: str) -> DataFrame:
 
 
 def to_silver(bronze: DataFrame) -> DataFrame:
-    """Parse the JSON payload and project the expected Silver schema.
+    """Parse the JSON payload and project the expected Silver layout.
 
-    No casts, dedup, or feature engineering yet — this is the noop
-    skeleton for micro-step 3.1.
+    Source payload fields come out as StringType; casts and downstream
+    cleaning are applied by separate steps in `main`.
     """
     payload_schema = build_payload_schema()
     parsed = bronze.withColumn("_payload", from_json(col("value"), payload_schema))
     projected_payload = [col(f"_payload.{name}").alias(name) for name in SOURCE_PAYLOAD_COLUMNS]
     audit = [col(name) for name in AUDIT_COLUMNS]
     return parsed.select(*projected_payload, *audit)
+
+
+def apply_casts(df: DataFrame) -> DataFrame:
+    """Cast PCA features to Double, Amount to Decimal, and Class to Integer.
+
+    `Time` and `event_timestamp` stay as StringType at this stage; the
+    timestamp parse happens later when temporal features are derived.
+    """
+    casted = df
+    for column_name in PCA_FEATURE_COLUMNS:
+        casted = casted.withColumn(column_name, col(column_name).cast(DoubleType()))
+    casted = casted.withColumn(
+        "Amount",
+        col("Amount").cast(DecimalType(AMOUNT_DECIMAL_PRECISION, AMOUNT_DECIMAL_SCALE)),
+    )
+    casted = casted.withColumn("Class", col("Class").cast(IntegerType()))
+    return casted
+
+
+def drop_invalid_rows(df: DataFrame) -> DataFrame:
+    """Drop rows where any required typed column is null.
+
+    A null in a typed column means either the source was already null or
+    the cast in `apply_casts` could not parse the string — both are
+    treated as unusable rows for downstream modeling.
+    """
+    required_columns = [*PCA_FEATURE_COLUMNS, "Amount", "Class"]
+    return df.dropna(subset=required_columns)
 
 
 def write_silver(silver: DataFrame, output_path: str) -> None:
@@ -94,6 +131,8 @@ def main() -> int:
 
     bronze = read_bronze(spark, input_path)
     silver = to_silver(bronze)
+    silver = apply_casts(silver)
+    silver = drop_invalid_rows(silver)
     write_silver(silver, output_path)
 
     logger.info("silver job finished")
