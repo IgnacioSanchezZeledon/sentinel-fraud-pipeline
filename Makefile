@@ -1,5 +1,5 @@
 .DEFAULT_GOAL := help
-.PHONY: help up down logs health clean smoke-phase1 producer bronze-consumer
+.PHONY: help up down logs health clean smoke-phase1 producer bronze-consumer silver
 
 help: ## Show this help message
 	@grep -hE '^[a-zA-Z0-9_-]+:.*?## ' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  %-13s %s\n", $$1, $$2}'
@@ -35,3 +35,8 @@ bronze-consumer: ## Run the bronze structured streaming consumer (foreground; Ct
 	docker compose exec -T spark-master /opt/spark/bin/spark-submit \
 	  --master spark://spark-master:7077 \
 	  /opt/app/src/consumers/bronze_consumer.py
+
+silver: ## Run the silver batch job (bronze -> silver delta)
+	docker compose exec -T spark-master /opt/spark/bin/spark-submit \
+	  --master spark://spark-master:7077 \
+	  /opt/app/src/transformations/silver_job.py
