@@ -43,12 +43,23 @@ CSV → Kafka Producer → [transactions topic]
 
 ## Quick start (current state)
 
-Phase 1 is complete: the full local infrastructure boots from a clean slate with three commands.
+Phases 1–3 are complete: infrastructure, the Kafka producer with Bronze
+ingestion, and the Silver batch layer (typed, deduplicated, feature-engineered).
+The full local stack boots from a clean slate with three commands.
 
 ```bash
 cp .env.example .env
 make up
 make health
+```
+
+With the stack up, the data path can be exercised end to end:
+
+```bash
+make producer ARGS="--mode slow --limit 100"   # publish transactions to Kafka
+make bronze-consumer                            # Kafka -> Bronze (Delta)
+make silver                                      # Bronze -> Silver (Delta)
+make test-silver                                 # Silver transform unit tests (no docker)
 ```
 
 Once `make health` reports all services as `[OK]`, the following endpoints are available:
@@ -72,8 +83,8 @@ Other useful targets: `make logs`, `make down`, `make clean` (the last one wipes
 |-------|------------------------------------------|:------:|
 | 0     | Git foundation                           |   ✅   |
 | 1     | Infrastructure (Docker Compose)          |   ✅   |
-| 2     | Kafka producer + Bronze ingestion        |   ⏳   |
-| 3     | Silver layer (PySpark batch)             |   ⏳   |
+| 2     | Kafka producer + Bronze ingestion        |   ✅   |
+| 3     | Silver layer (PySpark batch)             |   ✅   |
 | 4     | ML training + MLflow                     |   ⏳   |
 | 5     | Gold layer + inference                   |   ⏳   |
 | 6     | Airflow orchestration                    |   ⏳   |
