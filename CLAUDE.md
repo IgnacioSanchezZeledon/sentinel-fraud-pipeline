@@ -124,7 +124,7 @@ Cada fase del prompt original (`docs/PROMPT.md`) se descompone aquí en micro-pa
 - [x] **3.1** Esqueleto del job: lectura Bronze + escritura noop a Silver con schema esperado
   - Verificar: `make silver` corre sin errores; tabla Delta vacía (o con filas crudas) en `s3a://silver/transactions/`
   - Commit: `feat(phase-3): silver job scaffold with read/write plumbing`
-- [ ] **3.2** Casts de tipos (V1–V28 → DoubleType, Amount → DecimalType, Class → IntegerType) + filtrado de nulos
+- [x] **3.2** Casts de tipos (V1–V28 → DoubleType, Amount → DecimalType, Class → IntegerType) + filtrado de nulos
   - Verificar: schema final tiene los tipos correctos; `df.filter(col("Amount").isNull()).count() == 0`
   - Commit: `feat(phase-3): add type casts and null filtering`
 - [ ] **3.3** Deduplicación por `event_id`
@@ -249,8 +249,8 @@ Cada fase del prompt original (`docs/PROMPT.md`) se descompone aquí en micro-pa
 - **Fase 0 — Git foundation:** ✅ completa
 - **Fase 1 — Infraestructura:** ✅ completa (1.1 → 1.10)
 - **Fase 2 — Producer + Bronze:** ✅ completa (2.1 → 2.7)
-- **Fase actual:** Fase 3 — Silver (1/6 micro-pasos cerrados)
-- **Próximo micro-paso:** `3.2` — Casts de tipos (V1–V28 → DoubleType, Amount → DecimalType, Class → IntegerType) + filtrado de nulos
+- **Fase actual:** Fase 3 — Silver (2/6 micro-pasos cerrados)
+- **Próximo micro-paso:** `3.3` — Deduplicación por `event_id`
 
 ---
 
