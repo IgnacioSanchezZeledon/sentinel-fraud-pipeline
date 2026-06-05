@@ -3,9 +3,8 @@
 Batch PySpark job that reads the Bronze Delta table, parses the raw JSON
 `value` payload, applies type casts (V1–V28 → Double, Amount → Decimal,
 Class → Integer), drops rows where any required typed column is null,
-deduplicates by `event_id`, and adds temporal and amount-based features
-before writing the result as Delta at `s3a://silver/transactions/`.
-Window-based features land in micro-step 3.5.
+deduplicates by `event_id`, derives temporal/amount/window features,
+and writes the result as Delta at `s3a://silver/transactions/`.
 """
 
 from __future__ import annotations
@@ -16,7 +15,20 @@ import os
 import sys
 
 from pyspark.sql import DataFrame, SparkSession
-from pyspark.sql.functions import col, cos, dayofweek, from_json, hour, sin, to_timestamp, when
+from pyspark.sql.functions import (
+    avg,
+    col,
+    cos,
+    dayofweek,
+    from_json,
+    hour,
+    lit,
+    mean,
+    sin,
+    stddev,
+    to_timestamp,
+    when,
+)
 from pyspark.sql.types import (
     DecimalType,
     DoubleType,
@@ -25,6 +37,7 @@ from pyspark.sql.types import (
     StructField,
     StructType,
 )
+from pyspark.sql.window import Window
 
 AMOUNT_DECIMAL_PRECISION = 18
 AMOUNT_DECIMAL_SCALE = 2
@@ -34,6 +47,9 @@ HOURS_PER_DAY = 24
 AMOUNT_BIN_LOW_MAX = 10
 AMOUNT_BIN_MEDIUM_MAX = 100
 AMOUNT_BIN_HIGH_MAX = 1000
+
+WINDOW_SIZE_LAST_N = 5
+HIGH_AMOUNT_ZSCORE_THRESHOLD = 2.0
 
 logger = logging.getLogger(__name__)
 
@@ -158,6 +174,46 @@ def add_amount_features(df: DataFrame) -> DataFrame:
     )
 
 
+def add_window_features(df: DataFrame) -> DataFrame:
+    """Derive rolling average, global z-score, and high-amount flag.
+
+    `avg_amount_last_5` is a trailing 5-row mean (current row included)
+    over the global event_timestamp ordering. With no `customer_id` yet
+    (that lands in phase 5) the only meaningful ordering is global, so
+    Spark will emit a single-partition warning at this scale.
+
+    `amount_zscore` uses the global mean and sample stddev computed in
+    a single agg pass, broadcast as literals — avoids a second window
+    scan and keeps the warning to one.
+
+    `is_high_amount` flags rows more than `HIGH_AMOUNT_ZSCORE_THRESHOLD`
+    standard deviations above the global mean.
+    """
+    amount_double = col("Amount").cast(DoubleType())
+    rolling_window = Window.orderBy("event_timestamp").rowsBetween(
+        -(WINDOW_SIZE_LAST_N - 1), 0
+    )
+
+    with_rolling = df.withColumn(
+        "avg_amount_last_5", avg(amount_double).over(rolling_window)
+    )
+
+    stats = with_rolling.agg(
+        mean(amount_double).alias("mu"),
+        stddev(amount_double).alias("sigma"),
+    ).first()
+    mu = float(stats["mu"])
+    sigma = float(stats["sigma"])
+
+    return (
+        with_rolling.withColumn(
+            "amount_zscore", (amount_double - lit(mu)) / lit(sigma)
+        ).withColumn(
+            "is_high_amount", col("amount_zscore") > HIGH_AMOUNT_ZSCORE_THRESHOLD
+        )
+    )
+
+
 def write_silver(silver: DataFrame, output_path: str) -> None:
     """Overwrite the Silver Delta table at `output_path`."""
     (
@@ -189,6 +245,7 @@ def main() -> int:
     silver = deduplicate(silver)
     silver = add_temporal_features(silver)
     silver = add_amount_features(silver)
+    silver = add_window_features(silver)
     write_silver(silver, output_path)
 
     logger.info("silver job finished")
