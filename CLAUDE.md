@@ -127,7 +127,7 @@ Cada fase del prompt original (`docs/PROMPT.md`) se descompone aquí en micro-pa
 - [x] **3.2** Casts de tipos (V1–V28 → DoubleType, Amount → DecimalType, Class → IntegerType) + filtrado de nulos
   - Verificar: schema final tiene los tipos correctos; `df.filter(col("Amount").isNull()).count() == 0`
   - Commit: `feat(phase-3): add type casts and null filtering`
-- [ ] **3.3** Deduplicación por `event_id`
+- [x] **3.3** Deduplicación por `event_id`
   - Verificar: ejecutar Silver dos veces sobre la misma Bronze deja el mismo count
   - Commit: `feat(phase-3): deduplicate by event_id`
 - [ ] **3.4** Features temporales y de monto (`transaction_hour`, `transaction_day_of_week`, `hour_sin`, `hour_cos`, `amount_bin`)
@@ -249,8 +249,8 @@ Cada fase del prompt original (`docs/PROMPT.md`) se descompone aquí en micro-pa
 - **Fase 0 — Git foundation:** ✅ completa
 - **Fase 1 — Infraestructura:** ✅ completa (1.1 → 1.10)
 - **Fase 2 — Producer + Bronze:** ✅ completa (2.1 → 2.7)
-- **Fase actual:** Fase 3 — Silver (2/6 micro-pasos cerrados)
-- **Próximo micro-paso:** `3.3` — Deduplicación por `event_id`
+- **Fase actual:** Fase 3 — Silver (3/6 micro-pasos cerrados)
+- **Próximo micro-paso:** `3.4` — Features temporales y de monto (`transaction_hour`, `transaction_day_of_week`, `hour_sin`, `hour_cos`, `amount_bin`)
 
 ---
 
