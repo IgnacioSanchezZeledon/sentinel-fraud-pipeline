@@ -3,8 +3,8 @@
 Batch PySpark job that reads the Bronze Delta table, parses the raw JSON
 `value` payload, applies type casts (V1–V28 → Double, Amount → Decimal,
 Class → Integer), drops rows where any required typed column is null,
-and writes the result as Delta at `s3a://silver/transactions/`. Dedup
-and feature engineering land in micro-steps 3.3–3.5.
+deduplicates by `event_id`, and writes the result as Delta at
+`s3a://silver/transactions/`. Feature engineering lands in 3.4–3.5.
 """
 
 from __future__ import annotations
@@ -105,6 +105,17 @@ def drop_invalid_rows(df: DataFrame) -> DataFrame:
     return df.dropna(subset=required_columns)
 
 
+def deduplicate(df: DataFrame) -> DataFrame:
+    """Drop duplicate rows by `event_id`.
+
+    Bronze can receive duplicates from Kafka at-least-once retries; this
+    keeps Silver one row per event. The winning row is arbitrary, which
+    is acceptable because rows sharing an `event_id` carry the same
+    business payload.
+    """
+    return df.dropDuplicates(["event_id"])
+
+
 def write_silver(silver: DataFrame, output_path: str) -> None:
     """Overwrite the Silver Delta table at `output_path`."""
     (
@@ -133,6 +144,7 @@ def main() -> int:
     silver = to_silver(bronze)
     silver = apply_casts(silver)
     silver = drop_invalid_rows(silver)
+    silver = deduplicate(silver)
     write_silver(silver, output_path)
 
     logger.info("silver job finished")
